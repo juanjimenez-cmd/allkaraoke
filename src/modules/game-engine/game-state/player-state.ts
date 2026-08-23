@@ -2,6 +2,7 @@ import { FrequencyRecord, NotesSection, PlayerNote, songBeat } from '~/interface
 import { GameStateClass } from '~/modules/game-engine/game-state/game-state';
 import { appendFrequencyToPlayerNotes } from '~/modules/game-engine/game-state/helpers/append-frequency-to-player-notes';
 import calculateScore, { calculateDetailedScoreData } from '~/modules/game-engine/game-state/helpers/calculate-score';
+import calculateScoreV2 from '~/modules/game-engine/game-state/helpers/calculate-score-v2';
 import InputManager from '~/modules/game-engine/input/input-manager';
 import events from '~/modules/game-events/game-events';
 import { PlayerNumber } from '~/modules/players/player-number';
@@ -146,6 +147,7 @@ class PlayerState {
   };
 
   public getScore = () => calculateScore(this.playerNotes, this.gameState.getSong()!, this.getTrackIndex());
+  public getScoreV2 = () => calculateScoreV2(this.playerNotes, this.gameState.getSong()!, this.getTrackIndex());
   public getDetailedScore = () =>
     calculateDetailedScoreData(this.playerNotes, this.gameState.getSong()!, this.getTrackIndex());
 
