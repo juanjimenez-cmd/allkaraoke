@@ -2,7 +2,7 @@ import { memoize } from 'es-toolkit';
 
 import { noPointsNoteTypes } from '~/consts';
 import { DetailedScore, PlayerNote, Song } from '~/interfaces';
-import getPlayerNoteDistance from '~/modules/game-engine/helpers/get-player-note-distance';
+import getPlayerNotePitchQuality from '~/modules/game-engine/game-state/helpers/get-player-note-pitch-quality';
 import isNotesSection from '~/modules/songs/utils/is-notes-section';
 import tuple from '~/modules/utils/tuple';
 
@@ -29,7 +29,7 @@ const countsToBeats = (counts: DetailedScore): DetailedScore => ({
 });
 
 export const sumDetailedScore = (counts: DetailedScore) =>
-  counts.freestyle + counts.rap + counts.star + counts.normal + counts.perfect + counts.vibrato;
+  counts.freestyle + counts.rap + counts.rapstar + counts.star + counts.normal + counts.perfect + counts.vibrato;
 
 export const beatsToPoints = (counts: DetailedScore, pointsPerBeat: number): DetailedScore => ({
   freestyle: counts.freestyle * pointsPerBeat,
@@ -111,12 +111,14 @@ export function calculateDetailedScoreData(playerNotes: PlayerNote[], song: Song
   for (let i = 0; i < playerNotes.length; i++) {
     const note = playerNotes[i];
     if (noPointsNoteTypes.includes(note.note.type)) continue;
-    if (getPlayerNoteDistance(note) !== 0) continue;
 
-    counts[note.note.type] = counts[note.note.type] + note.length;
+    const pitchQuality = getPlayerNotePitchQuality(note);
+    const weightedLength = note.length * pitchQuality;
 
-    if (note.isPerfect) counts.perfect = counts.perfect + note.length;
-    if (note.vibrato) counts.vibrato = counts.vibrato + note.length;
+    counts[note.note.type] = counts[note.note.type] + weightedLength;
+
+    if (note.isPerfect && pitchQuality > 0) counts.perfect = counts.perfect + weightedLength;
+    if (note.vibrato && pitchQuality > 0) counts.vibrato = counts.vibrato + weightedLength;
   }
 
   return tuple([pointsPerBeat, countsToBeats(counts), maxCounts]);
