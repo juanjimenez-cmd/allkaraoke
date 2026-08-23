@@ -69,7 +69,7 @@ describe('calculateScoreV2', () => {
   });
 
   it('awards 10,000 points for a performance that maximizes every component', () => {
-    const notes = generateNotes(21, 2, 'star');
+    const notes = generateNotes(30, 2, 'star');
     const playerNotes = notes.map((note) => generateScoredPlayerNote(note, { isPerfect: true, vibrato: true }));
     const result = calculateScoreV2(playerNotes, generateScoringSong(notes), 0);
 
@@ -89,18 +89,33 @@ describe('calculateScoreV2', () => {
         timingRatio: 1,
         perfectRatio: 1,
         starRatio: 1,
-        maxStreak: 21,
+        maxStreak: 30,
       },
     });
   });
 
-  it('keeps perfect pitch near its maximum when timing coverage is 50%', () => {
+  it('awards maximum pitch for 100% of target pitch material at quality 1', () => {
+    const note = generateNote(0, 4);
+    const result = calculateScoreV2([generateScoredPlayerNote(note)], generateScoringSong([note]), 0);
+
+    expect(result.pitch).toBe(MAX_PITCH_SCORE);
+  });
+
+  it('awards half pitch for 50% of target pitch material at quality 1', () => {
     const note = generateNote(0, 4);
     const playerNote = generateScoredPlayerNote(note, { length: 2 });
     const result = calculateScoreV2([playerNote], generateScoringSong([note]), 0);
 
-    expect(result.pitch).toBe(MAX_PITCH_SCORE);
+    expect(result.pitch).toBe(MAX_PITCH_SCORE * 0.5);
     expect(result.timing).toBe(MAX_TIMING_SCORE * 0.5);
+  });
+
+  it('awards 10% pitch for 10% of target pitch material at quality 1', () => {
+    const note = generateNote(0, 10);
+    const playerNote = generateScoredPlayerNote(note, { length: 1 });
+    const result = calculateScoreV2([playerNote], generateScoringSong([note]), 0);
+
+    expect(result.pitch).toBeCloseTo(MAX_PITCH_SCORE * 0.1);
   });
 
   it('scores pitch quality 0.5 independently from perfect timing', () => {
@@ -138,6 +153,37 @@ describe('calculateScoreV2', () => {
     expect(result.pitch).toBe(0);
     expect(result.timing).toBe(MAX_TIMING_SCORE);
   });
+
+  it('excludes rap and freestyle from both pitch numerator and denominator', () => {
+    const normalNote = generateNote(0, 2, { type: 'normal' });
+    const rapNote = generateNote(2, 2, { type: 'rap' });
+    const freestyleNote = generateNote(4, 2, { type: 'freestyle' });
+    const song = generateScoringSong([normalNote, rapNote, freestyleNote]);
+    const result = calculateScoreV2(
+      [
+        generateScoredPlayerNote(normalNote),
+        generateScoredPlayerNote(rapNote, { preciseDistances: [200] }),
+        generateScoredPlayerNote(freestyleNote, { preciseDistances: [200] }),
+      ],
+      song,
+      0,
+    );
+
+    expect(result.pitch).toBe(MAX_PITCH_SCORE);
+  });
+
+  it.each(['star', 'rapstar'] as const)(
+    'includes %s in target pitch duration without applying its legacy multiplier',
+    (type) => {
+      const normalNote = generateNote(0, 2, { type: 'normal' });
+      const specialNote = generateNote(2, 2, { type });
+      const song = generateScoringSong([normalNote, specialNote]);
+      const result = calculateScoreV2([generateScoredPlayerNote(specialNote)], song, 0);
+
+      expect(result.metrics.pitchRatio).toBe(0.5);
+      expect(result.pitch).toBe(MAX_PITCH_SCORE * 0.5);
+    },
+  );
 
   it('awards star bonus according to pitch quality and timing coverage', () => {
     const note = generateNote(0, 4, { type: 'star' });
@@ -205,13 +251,24 @@ describe('calculateScoreV2', () => {
   it.each`
     maxStreak | expectedBonus
     ${0}      | ${0}
-    ${3}      | ${50 / 3}
+    ${2}      | ${0}
+    ${3}      | ${0}
     ${5}      | ${50}
+    ${6}      | ${50}
     ${10}     | ${100}
+    ${11}     | ${100}
     ${20}     | ${150}
-    ${21}     | ${200}
+    ${21}     | ${150}
+    ${30}     | ${200}
+    ${35}     | ${200}
   `('calculates $expectedBonus streak points for a streak of $maxStreak', ({ maxStreak, expectedBonus }) => {
     expect(calculateStreakBonus(maxStreak)).toBeCloseTo(expectedBonus);
+  });
+
+  it('never decreases streak bonus as the streak grows', () => {
+    const bonuses = Array.from({ length: 51 }, (_, streak) => calculateStreakBonus(streak));
+
+    expect(bonuses.every((bonus, index) => index === 0 || bonus >= bonuses[index - 1])).toBe(true);
   });
 
   it('uses pitch and timing thresholds when calculating consecutive hits', () => {
@@ -229,7 +286,7 @@ describe('calculateScoreV2', () => {
     const result = calculateScoreV2(playerNotes, generateScoringSong(notes), 0);
 
     expect(result.metrics.maxStreak).toBe(3);
-    expect(result.bonusBreakdown.streak).toBeCloseTo(50 / 3);
+    expect(result.bonusBreakdown.streak).toBe(0);
   });
 
   it('uses timing only when calculating rap and freestyle streak hits', () => {

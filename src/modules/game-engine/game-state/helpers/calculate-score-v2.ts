@@ -145,13 +145,22 @@ const calculateNotePerformance = (note: Note, playerNotes: PlayerNote[]): NotePe
   };
 };
 
+const interpolateStreakBonus = (
+  streak: number,
+  minimumStreak: number,
+  maximumStreak: number,
+  minimumBonus: number,
+  maximumBonus: number,
+) => minimumBonus + ((streak - minimumStreak) / (maximumStreak - minimumStreak)) * (maximumBonus - minimumBonus);
+
 export function calculateStreakBonus(maxStreak: number): number {
   const streak = Number.isFinite(maxStreak) ? Math.max(0, Math.floor(maxStreak)) : 0;
 
   if (streak <= 2) return 0;
-  if (streak <= 5) return ((streak - 2) / 3) * 50;
-  if (streak <= 10) return 50 + ((streak - 5) / 5) * 50;
-  if (streak <= 20) return 100 + ((streak - 10) / 10) * 50;
+  if (streak <= 5) return interpolateStreakBonus(streak, 3, 5, 0, 50);
+  if (streak <= 10) return interpolateStreakBonus(streak, 6, 10, 50, 100);
+  if (streak <= 20) return interpolateStreakBonus(streak, 11, 20, 100, 150);
+  if (streak <= 30) return interpolateStreakBonus(streak, 21, 30, 150, MAX_STREAK_BONUS);
 
   return MAX_STREAK_BONUS;
 }
@@ -188,14 +197,13 @@ export default function calculateScoreV2(playerNotes: PlayerNote[], song: Song, 
   const performances = targetNotes.map((note) => calculateNotePerformance(note, playerNotesByTarget.get(note) ?? []));
   const pitchPerformances = performances.filter(({ note }) => isPitchNote(note));
 
-  const performedPitchDuration = pitchPerformances.reduce((sum, performance) => sum + performance.coveredLength, 0);
+  const totalTargetPitchDuration = pitchPerformances.reduce((sum, { note }) => sum + note.length, 0);
   const pitchWeightedDuration = pitchPerformances.reduce(
     (sum, performance) => sum + performance.pitchWeightedLength,
     0,
   );
 
-  // Pitch is normalized over performed overlap so accuracy remains independent from timing coverage.
-  const pitchRatio = clampRatio(divideOrZero(pitchWeightedDuration, performedPitchDuration));
+  const pitchRatio = clampRatio(divideOrZero(pitchWeightedDuration, totalTargetPitchDuration));
   const pitch = clamp(pitchRatio * MAX_PITCH_SCORE, 0, MAX_PITCH_SCORE);
 
   const totalTargetDuration = targetNotes.reduce((sum, note) => sum + note.length, 0);
