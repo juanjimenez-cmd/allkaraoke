@@ -29,6 +29,33 @@ describe('getPlayerNotePitchQuality', () => {
     expect(getPlayerNotePitchQuality(playerNote)).toBe(0.97);
   });
 
+  it('ignores the invalid precise distance sentinel when valid records exist', () => {
+    const playerNote = generatePlayerNote(generateNote(0, 1, { type: 'normal' }), 0, 0, 1, false, false, [
+      generateRecord(-1),
+      generateRecord(20),
+    ]);
+
+    expect(getPlayerNotePitchQuality(playerNote)).toBe(0.97);
+  });
+
+  it.each(['normal', 'star', 'rapstar'] as const)(
+    'returns 0 for a %s note with only the invalid precise distance sentinel',
+    (type) => {
+      const playerNote = generatePlayerNote(generateNote(0, 1, { type }), 0, 0, 1, false, false, [generateRecord(-1)]);
+
+      expect(getPlayerNotePitchQuality(playerNote)).toBe(0);
+    },
+  );
+
+  it.each(['rap', 'freestyle'] as const)(
+    'returns 1 for a %s note with the invalid precise distance sentinel',
+    (type) => {
+      const playerNote = generatePlayerNote(generateNote(0, 1, { type }), 0, 0, 1, false, false, [generateRecord(-1)]);
+
+      expect(getPlayerNotePitchQuality(playerNote)).toBe(1);
+    },
+  );
+
   it.each(['normal', 'star', 'rapstar'] as const)('returns 0 for a %s note without valid records', (type) => {
     const playerNote = generatePlayerNote(generateNote(0, 1, { type }), 0, 0, 1, false, false, [
       generateRecord(Number.NaN),

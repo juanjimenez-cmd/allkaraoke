@@ -129,6 +129,12 @@ describe('calculateScore', () => {
       expect(calculateScore([playerNote], normalSong, 0)).toBe(0);
     });
 
+    it('should contribute no points when all precise distances contain the invalid sentinel', () => {
+      const playerNote = generateScoredPlayerNote(normalNote, -1, { isPerfect: true, vibrato: true });
+
+      expect(calculateScore([playerNote], normalSong, 0)).toBe(0);
+    });
+
     it('should use precise pitch quality instead of the binary note distance', () => {
       const inPitchDistanceScore = calculateScore([generateScoredPlayerNote(normalNote, 0)], normalSong, 0);
       const outOfPitchDistanceScore = calculateScore(
