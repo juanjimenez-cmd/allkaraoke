@@ -8,6 +8,7 @@ import { PlayerNumber } from '~/modules/players/player-number';
 import { formatter } from '~/routes/game/singing/game-overlay/components/score-text';
 import { PlayerScore } from '~/routes/game/singing/post-game/post-game-view';
 import PlayerDetailedScore from '~/routes/game/singing/post-game/views/results/player-detailed-score';
+import PlayerScoreV2 from '~/routes/game/singing/post-game/views/results/player-score-v2';
 import { cn } from '~/utils/cn';
 
 interface Props {
@@ -31,6 +32,18 @@ function PlayerScoreView({
   revealHighScore,
   segment,
 }: Props) {
+  if (player.scoringV2) {
+    return (
+      <PlayerScoreV2
+        player={player}
+        playerNumber={playerNumber}
+        highestScore={highestScore}
+        revealWinner={revealHighScore}
+        useColors={useColors}
+      />
+    );
+  }
+
   const [detailedScore] = player.detailedScore;
   let playerScore = 0;
   if (segment > -1) {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { DetailedScore, SingSetup, Song } from '~/interfaces';
 import { GameTip } from '~/modules/elements/game-tip';
+import { ScoringV2Result } from '~/modules/game-engine/game-state/helpers/calculate-score-v2';
 import useBackgroundMusic from '~/modules/hooks/use-background-music';
 import { PlayerNumber } from '~/modules/players/player-number';
 import ResultsView from '~/routes/game/singing/post-game/views/results';
@@ -12,6 +13,7 @@ import HighScoresView from './views/high-scores';
 
 export interface PlayerScore {
   detailedScore: [DetailedScore, DetailedScore];
+  scoringV2?: ScoringV2Result;
   playerNumber: PlayerNumber;
   name: string;
 }

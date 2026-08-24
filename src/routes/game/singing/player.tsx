@@ -12,6 +12,7 @@ import {
 
 import { milliseconds, seconds, SingSetup, Song } from '~/interfaces';
 import VideoPlayer, { VideoPlayerRef, VideoState } from '~/modules/elements/video-player/index';
+import { SCORING_ENGINE, ScoringEngine } from '~/modules/game-engine/game-state/scoring-engine';
 import useKeyboard from '~/modules/hooks/use-keyboard';
 import useKeyboardHelp from '~/modules/hooks/use-keyboard-help';
 import usePrevious from '~/modules/hooks/use-previous';
@@ -45,6 +46,7 @@ interface Props extends Omit<ComponentProps<'div'>, 'ref'>, RefAttributes<Player
   onSkipIntro?: (targetTimeSec: number) => void;
   /** Online mode: who leads the room, for the first-place medal — see GameOverlay's prop. */
   leadingPlayerNumber?: PlayerNumber | null;
+  scoringEngine?: ScoringEngine;
 }
 
 export interface PlayerRef {
@@ -86,6 +88,7 @@ function Player({
   skipIntroEnabled = true,
   onSkipIntro,
   leadingPlayerNumber,
+  scoringEngine = SCORING_ENGINE,
   ref,
   ...restProps
 }: Props) {
@@ -211,6 +214,7 @@ function Player({
             skipIntroEnabled={skipIntroEnabled}
             onSkipIntro={onSkipIntro}
             leadingPlayerNumber={leadingPlayerNumber}
+            scoringEngine={scoringEngine}
           />
         </div>
       )}

@@ -5,11 +5,13 @@ import { VideoPlayerRef, VideoState } from '~/modules/elements/video-player/inde
 import CanvasDrawing from '~/modules/game-engine/drawing/index';
 import fragShader from '~/modules/game-engine/drawing/shaders/shader.frag?raw';
 import vertShader from '~/modules/game-engine/drawing/shaders/shader.vert?raw';
+import { SCORING_ENGINE, ScoringEngine } from '~/modules/game-engine/game-state/scoring-engine';
 import { PlayerNumber } from '~/modules/players/player-number';
 import PlayersManager from '~/modules/players/players-manager';
 import tuple from '~/modules/utils/tuple';
 import SkipIntro from '~/routes/game/singing/game-overlay/components/skip-intro';
 import SkipOutro from '~/routes/game/singing/game-overlay/components/skip-outro';
+import getOverlayScore from '~/routes/game/singing/game-overlay/helpers/get-overlay-score';
 import getPlayerScoreData from '~/routes/game/singing/game-overlay/helpers/get-player-score-data';
 import { GraphicSetting, MobilePhoneModeSetting, useSettingValue } from '~/routes/settings/settings-state';
 
@@ -38,6 +40,7 @@ interface Props {
    * device — in a room that is only ever this singer, so everyone would be crowned first. */
   leadingPlayerNumber?: PlayerNumber | null;
   onOpenPauseMenu?: () => void;
+  scoringEngine?: ScoringEngine;
 }
 
 const MAX_RENDER_RESOLUTION_W = 1920;
@@ -57,6 +60,7 @@ const GameOverlay = forwardRef(function (
     skipIntroEnabled = true,
     onSkipIntro,
     leadingPlayerNumber,
+    scoringEngine = SCORING_ENGINE,
   }: Props,
   fRef,
 ) {
@@ -120,6 +124,10 @@ const GameOverlay = forwardRef(function (
 
   const players = PlayersManager.getPlayers();
   const showMultipleLines = !mobilePhoneMode && players.length > 1;
+  const getVisibleScore = (player: PlayerNumber) => {
+    const score = scoringEngine === 'v2' ? GameState.getPlayerScoreV2(player) : GameState.getPlayerScore(player);
+    return getOverlayScore(score, scoringEngine);
+  };
 
   return (
     <div className="relative flex h-full flex-col font-bold text-white">
@@ -166,13 +174,13 @@ const GameOverlay = forwardRef(function (
         {effectsEnabled && (
           <>
             {GameState.getSingSetup()?.mode === GAME_MODE.CO_OP ? (
-              <span data-test="players-score" data-score={Math.floor(GameState.getPlayerScore(0))}>
-                <ScoreText score={GameState.getPlayerScore(0)} />
+              <span data-test="players-score" data-score={Math.floor(getVisibleScore(0))}>
+                <ScoreText score={getVisibleScore(0)} />
               </span>
             ) : (
               PlayersManager.getPlayers().map((player) => {
                 const scores = PlayersManager.getPlayers().map((player) =>
-                  tuple([player.number, GameState.getPlayerScore(player.number)]),
+                  tuple([player.number, getVisibleScore(player.number)]),
                 );
                 const { score, isFirst } = getPlayerScoreData(scores, player.number);
                 const isLeading = leadingPlayerNumber === undefined ? isFirst : leadingPlayerNumber === player.number;

@@ -1,9 +1,13 @@
 import clsx from 'clsx';
 
+import getScoreBarProgress from '~/routes/game/singing/post-game/helpers/get-score-bar-progress';
+
 interface Props {
   score: number;
   maxScore: number;
   color: string;
+  maxWidthPercent?: number;
+  easingEnabled?: boolean;
 }
 
 function easeOutCubic(x: number): number {
@@ -14,18 +18,17 @@ function easing(x: number): number {
   return easeOutCubic(x);
 }
 
-function ScoreBar({ color, maxScore, score }: Props) {
-  const rawProgress = maxScore > 0 ? score / maxScore : 0;
-  const progress = Math.max(0, Math.min(1, rawProgress));
+function ScoreBar({ color, maxScore, score, maxWidthPercent = 24, easingEnabled = true }: Props) {
+  const progress = getScoreBarProgress(score, maxScore);
 
   return (
     <div
       className={clsx(
         'box-border h-full rounded-lg transition-all duration-1000',
-        score === 0 ? 'border-0' : 'border border-black',
+        progress === 0 ? 'border-0' : 'border border-black',
       )}
       style={{
-        width: `${easing(progress) * 24}%`,
+        width: `${(easingEnabled ? easing(progress) : progress) * maxWidthPercent}%`,
         backgroundColor: color,
         backgroundImage:
           'linear-gradient(180deg, rgba(0, 0, 0, 0.17) 0%, rgba(0, 0, 0, 0.03) 50%, rgba(0, 0, 0, 0.18) 51%, rgba(0, 0, 0, 0.18) 100%)',

@@ -6,6 +6,7 @@ import CameraManager from '~/modules/camera/camera-manager';
 import { Button } from '~/modules/elements/akui/button';
 import { sumDetailedScore } from '~/modules/game-engine/game-state/helpers/calculate-score';
 import useKeyboardNav, { RegisterFunc } from '~/modules/hooks/use-keyboard-nav';
+import { getRoundedScoreV2 } from '~/routes/game/singing/game-overlay/helpers/format-score';
 import { PlayerScore } from '~/routes/game/singing/post-game/post-game-view';
 import CameraRoll from '~/routes/game/singing/post-game/views/results/camera-roll';
 import { CameraRollPlaceholder } from '~/routes/game/singing/post-game/views/results/camera-roll-placeholder';
@@ -51,7 +52,9 @@ function ResultsView({ onNextStep, players, highScores, singSetup, cameraEnabled
   const isCoop = singSetup.mode === GAME_MODE.CO_OP;
   const finalPlayers = isCoop ? [{ ...players[0], name: players.map((player) => player.name).join(', ') }] : players;
 
-  const playerScores = finalPlayers.map((player) => sumDetailedScore(player.detailedScore[0]));
+  const playerScores = finalPlayers.map((player) =>
+    player.scoringV2 ? getRoundedScoreV2(player.scoringV2.total) : sumDetailedScore(player.detailedScore[0]),
+  );
   const highestScore = Math.max(...playerScores);
 
   const revealHighScore = segment > 3;

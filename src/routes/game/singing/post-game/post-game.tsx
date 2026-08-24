@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { SingSetup, Song } from '~/interfaces';
+import { areLegacyHighScoresEnabled, isScoringV2Enabled } from '~/modules/game-engine/game-state/scoring-engine';
 import PlayersManager from '~/modules/players/players-manager';
 import useHighScores from '~/routes/game/singing/post-game/hooks/use-high-scores';
 import PostGameView from '~/routes/game/singing/post-game/post-game-view';
@@ -18,6 +19,8 @@ interface Props {
 }
 
 function PostGame({ song, width, height, onClickSongSelection, singSetup }: Props) {
+  const scoringV2Enabled = isScoringV2Enabled();
+  const highScoresEnabled = areLegacyHighScoresEnabled();
   const highScores = useHighScores(song, singSetup);
   const playerScores = useMemo(
     () =>
@@ -25,8 +28,9 @@ function PostGame({ song, width, height, onClickSongSelection, singSetup }: Prop
         name: player.getName(),
         playerNumber: player.number,
         detailedScore: GameState.getPlayerDetailedScore(player.number),
+        scoringV2: scoringV2Enabled ? GameState.getPlayerScoreResultV2(player.number) : undefined,
       })),
-    [],
+    [scoringV2Enabled],
   );
 
   return (
@@ -48,7 +52,8 @@ function PostGame({ song, width, height, onClickSongSelection, singSetup }: Prop
           }
         }}
         players={playerScores}
-        highScores={highScores}
+        highScores={highScoresEnabled ? highScores : []}
+        highScoresEnabled={highScoresEnabled}
       />
     </LayoutGame>
   );

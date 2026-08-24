@@ -312,6 +312,7 @@ function OnlineSinging({ roomState, song }: Props) {
           autoplay={false}
           onSongEnd={onSongEnd}
           singSetup={singSetup}
+          scoringEngine="legacy"
           // Skip intro is offered only to the host and applies to the whole room
           skipIntroEnabled={isHost}
           leadingPlayerNumber={leadingPlayerNumber}

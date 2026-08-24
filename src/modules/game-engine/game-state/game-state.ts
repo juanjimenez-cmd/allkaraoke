@@ -4,7 +4,13 @@ import {
   beatsToPoints,
   divideDetailedScores,
 } from '~/modules/game-engine/game-state/helpers/calculate-score';
+import { ScoringV2Result } from '~/modules/game-engine/game-state/helpers/calculate-score-v2';
 import getCurrentBeat from '~/modules/game-engine/game-state/helpers/get-current-beat';
+import {
+  averageScoringV2Results,
+  createEmptyScoringV2Result,
+  isValidScoringV2Result,
+} from '~/modules/game-engine/game-state/helpers/scoring-v2-result';
 import PlayerState from '~/modules/game-engine/game-state/player-state';
 import InputManager from '~/modules/game-engine/input/input-manager';
 import { PlayerNumber } from '~/modules/players/player-number';
@@ -69,6 +75,29 @@ export class GameStateClass {
       return this.getPlayer(player)?.getScore() ?? -1;
     }
   };
+
+  private getSafePlayerScoreResultV2 = (player: PlayerState | undefined): ScoringV2Result => {
+    try {
+      const result = player?.getScoreV2();
+      if (result && isValidScoringV2Result(result)) return result;
+
+      console.error('Invalid Scoring V2 result', result);
+    } catch (error) {
+      console.error('Unable to calculate Scoring V2 result', error);
+    }
+
+    return createEmptyScoringV2Result();
+  };
+
+  public getPlayerScoreResultV2 = (player: PlayerNumber): ScoringV2Result => {
+    if (this.getSingSetup()?.mode === GAME_MODE.CO_OP) {
+      return averageScoringV2Results(this.getPlayers().map(this.getSafePlayerScoreResultV2));
+    }
+
+    return this.getSafePlayerScoreResultV2(this.getPlayer(player));
+  };
+
+  public getPlayerScoreV2 = (player: PlayerNumber) => this.getPlayerScoreResultV2(player).total;
 
   public getPlayerDetailedScore = (player: PlayerNumber) => {
     if (this.getSingSetup()?.mode === GAME_MODE.CO_OP) {

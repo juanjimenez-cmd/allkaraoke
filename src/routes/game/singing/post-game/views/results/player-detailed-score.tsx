@@ -3,6 +3,7 @@ import Typewriter from 'typewriter-effect';
 import styles from '~/modules/game-engine/drawing/styles';
 import { PlayerNumber } from '~/modules/players/player-number';
 import { PlayerScore } from '~/routes/game/singing/post-game/post-game-view';
+import PlayerDetailedScoreV2 from '~/routes/game/singing/post-game/views/results/player-detailed-score-v2';
 import ScoreBar from '~/routes/game/singing/post-game/views/results/score-bar';
 
 interface Props {
@@ -11,6 +12,16 @@ interface Props {
   segment: number;
 }
 function PlayerDetailedScore({ playerNumber, player, segment }: Props) {
+  if (player.scoringV2) {
+    return (
+      <PlayerDetailedScoreV2
+        playerNumber={playerNumber}
+        result={player.scoringV2}
+        color={styles.colors.players[playerNumber].perfect.fill}
+      />
+    );
+  }
+
   const [detailedScore, maxScore] = player.detailedScore;
 
   return (
